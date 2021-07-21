@@ -1,0 +1,54 @@
+import requests 
+import json 
+
+
+# input your token here
+api_key = 'a13acb67127a1098b76cc85b555dee8573069811abe50084353da6c5d287'
+
+url = 'https://data-api.defipulse.com/api/v1/defipulse/api/GetHistory?api-key=' + api_key
+response = requests.get(url)
+result = json.loads(response.text)
+print(result[0]['tvlUSD'])
+
+print(result[1]['tvlUSD'])
+
+print(result[0:1]['tvlUSD'])
+
+#the graph
+from gql import gql, Client
+from gql.transport.requests import RequestsHTTPTransport
+
+sample_transport=RequestsHTTPTransport(
+    url='https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2',
+    verify=True,
+    retries=5,
+)
+client = Client(
+    transport=sample_transport
+)
+
+liquidity = []
+volume = []
+transactions = []
+x = 11276855
+
+while x > 11250000: 
+    query = gql('''
+    query {
+    uniswapFactory(id: "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f", block: {number: ''' + str(x) + '''}) {
+        totalVolumeUSD
+        totalLiquidityUSD
+        txCount
+    }
+    }
+    ''')
+    response = client.execute(query)
+    liquidity_value = response['uniswapFactory']['totalLiquidityUSD']
+    volume_value = response['uniswapFactory']['totalVolumeUSD']
+    transactions_value = response['uniswapFactory']['txCount']
+    liquidity.insert(0, liquidity_value)
+    volume.append(volume_value)
+    transactions.append(transactions_value)
+    x=x-1000
+    print(x)
+print(liquidity)
